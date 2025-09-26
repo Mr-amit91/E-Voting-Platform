@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Create New Poll - Online Voting System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">Create New Poll</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" id="poll-form" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Poll Details -->
+                    <div class="mb-4">
+                        <h5>Poll Details</h5>
+                        <hr>
+                        <div class="mb-3">
+                            <label for="{{ poll_form.question.id_for_label }}" class="form-label">Poll Question</label>
+                            {{ poll_form.question }}
+                            {% if poll_form.question.errors %}
+                                <div class="invalid-feedback d-block">{{ poll_form.question.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ poll_form.description.id_for_label }}" class="form-label">Description</label>
+                            {{ poll_form.description }}
+                            {% if poll_form.description.errors %}
+                                <div class="invalid-feedback d-block">{{ poll_form.description.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ poll_form.end_date.id_for_label }}" class="form-label">End Date & Time</label>
+                            {{ poll_form.end_date }}
+                            {% if poll_form.end_date.errors %}
+                                <div class="invalid-feedback d-block">{{ poll_form.end_date.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Choices -->
+                    <div class="mb-4">
+                        <h5>Poll Choices</h5>
+                        <hr>
+                        {{ choice_formset.management_form }}
+                        <div id="choice-formset">
+                            {% for form in choice_formset %}
+                                <div class="choice-form mb-3 p-3 border rounded">
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+                                    <div class="row">
+                                        <div class="col-md-5">
+                                            <label class="form-label">Choice Text</label>
+                                            {{ form.choice_text }}
+                                            {% if form.choice_text.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.choice_text.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label">Description (Optional)</label>
+                                            {{ form.description }}
+                                            {% if form.description.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.description.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-2 d-flex align-items-end">
+                                            {% if form.instance.pk %}
+                                                {{ form.DELETE }}
+                                                <label for="{{ form.DELETE.id_for_label }}" class="form-label">Delete</label>
+                                            {% else %}
+                                                <button type="button" class="btn btn-outline-danger btn-sm remove-choice">Remove</button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" id="add-choice" class="btn btn-outline-primary btn-sm">Add Another Choice</button>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'polls:index' %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-success">Create Poll</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let formCount = parseInt(document.querySelector('#id_form-TOTAL_FORMS').value);
+    
+    document.getElementById('add-choice').addEventListener('click', function() {
+        if (formCount < 10) { // Max 10 choices
+            const formsetDiv = document.getElementById('choice-formset');
+            const newForm = document.querySelector('.choice-form').cloneNode(true);
+            
+            // Update form indices
+            newForm.innerHTML = newForm.innerHTML.replace(/form-\d+/g, `form-${formCount}`);
+            newForm.querySelector('input[name*="choice_text"]').value = '';
+            newForm.querySelector('input[name*="description"]').value = '';
+            
+            formsetDiv.appendChild(newForm);
+            formCount++;
+            document.querySelector('#id_form-TOTAL_FORMS').value = formCount;
+        }
+    });
+    
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-choice')) {
+            if (document.querySelectorAll('.choice-form').length > 2) {
+                e.target.closest('.choice-form').remove();
+                formCount--;
+                document.querySelector('#id_form-TOTAL_FORMS').value = formCount;
+            } else {
+                alert('A poll must have at least 2 choices.');
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

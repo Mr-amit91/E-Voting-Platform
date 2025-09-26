@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - Online Voting System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h2>My Profile</h2>
+            <hr>
+        </div>
+    </div>
+    
+    <!-- User Info Card -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-person-circle" style="font-size: 4rem; color: #0d6efd;"></i>
+                    </div>
+                    <h5 class="card-title">{{ user.get_full_name|default:user.username }}</h5>
+                    <p class="card-text text-muted">{{ user.email }}</p>
+                    <p class="text-muted">
+                        <small>Member since {{ user.date_joined|date:"M Y" }}</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistics Cards -->
+        <div class="col-md-8">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Polls Created</h6>
+                                    <h3 class="mb-0">{{ stats.total_polls_created }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-clipboard-plus" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Active Polls</h6>
+                                    <h3 class="mb-0">{{ stats.active_polls }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Votes Cast</h6>
+                                    <h3 class="mb-0">{{ stats.total_votes_cast }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-hand-thumbs-up" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Votes Received</h6>
+                                    <h3 class="mb-0">{{ stats.total_votes_received }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-graph-up" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Recent Polls Created</h6>
+                    <a href="{% url 'polls:my_polls' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_polls %}
+                        {% for poll in recent_polls %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <a href="{% url 'polls:detail' poll.id %}" class="text-decoration-none">
+                                        {{ poll.question|truncatechars:40 }}
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">{{ poll.created_date|timesince }} ago</small>
+                                </div>
+                                <span class="badge bg-{{ poll.is_voting_open|yesno:'success,secondary' }}">
+                                    {{ poll.is_voting_open|yesno:'Active,Closed' }}
+                                </span>
+                            </div>
+                            {% if not forloop.last %}<hr class="my-2">{% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">No polls created yet.</p>
+                        <div class="text-center">
+                            <a href="{% url 'polls:create_poll' %}" class="btn btn-primary">Create Your First Poll</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Recent Votes Cast</h6>
+                    <a href="{% url 'accounts:voting_history' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_votes %}
+                        {% for vote in recent_votes %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <a href="{% url 'polls:results' vote.choice.poll.id %}" class="text-decoration-none">
+                                        {{ vote.choice.poll.question|truncatechars:30 }}
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">
+                                        Voted for: <strong>{{ vote.choice.choice_text }}</strong><br>
+                                        {{ vote.voted_at|timesince }} ago
+                                    </small>
+                                </div>
+                            </div>
+                            {% if not forloop.last %}<hr class="my-2">{% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">No votes cast yet.</p>
+                        <div class="text-center">
+                            <a href="{% url 'polls:index' %}" class="btn btn-primary">Start Voting</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

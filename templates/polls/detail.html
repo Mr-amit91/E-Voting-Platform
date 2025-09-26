@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ poll.question }} - Online Voting System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h2>{{ poll.question }}</h2>
+                <p class="mb-0">{{ poll.description }}</p>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted">
+                        <strong>Created by:</strong> {{ poll.created_by.get_full_name|default:poll.created_by.username }}<br>
+                        <strong>Voting Period:</strong> {{ poll.start_date|date:"M d, Y H:i" }} - {{ poll.end_date|date:"M d, Y H:i" }}<br>
+                        <strong>Total Votes:</strong> {{ poll.total_votes }}
+                    </small>
+                </div>
+
+                {% if user_vote %}
+                    <div class="alert alert-success">
+                        <h5>You have already voted!</h5>
+                        <p>Your choice: <strong>{{ user_vote.choice.choice_text }}</strong></p>
+                        <a href="{% url 'polls:results' poll.id %}" class="btn btn-primary">View Results</a>
+                    </div>
+                {% elif not voting_open %}
+                    <div class="alert alert-warning">
+                        <h5>Voting is closed</h5>
+                        <p>This poll is no longer accepting votes.</p>
+                        <a href="{% url 'polls:results' poll.id %}" class="btn btn-primary">View Results</a>
+                    </div>
+                {% else %}
+                    <form action="{% url 'polls:vote' poll.id %}" method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <fieldset class="mb-3">
+                            <legend class="h5">Choose your option:</legend>
+                            {% for choice in poll.choices.all %}
+                                <div class="form-check mb-3 p-2 border rounded">
+                                    <input class="form-check-input" type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}" required>
+                                    <label class="form-check-label" for="choice{{ forloop.counter }}">
+                                        <strong>{{ choice.choice_text }}</strong>
+                                        {% if choice.description %}
+                                            <br><small class="text-muted">{{ choice.description }}</small>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                            <div class="invalid-feedback">
+                                Please select an option.
+                            </div>
+                        </fieldset>
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-success btn-lg">Submit Vote</button>
+                            <a href="{% url 'polls:index' %}" class="btn btn-secondary">Back to Polls</a>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

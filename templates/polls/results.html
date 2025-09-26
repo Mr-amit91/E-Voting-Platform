@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Results: {{ poll.question }} - Online Voting System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h2>Results: {{ poll.question }}</h2>
+                <p class="mb-0">{{ poll.description }}</p>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <small class="text-muted">
+                        <strong>Created by:</strong> {{ poll.created_by.get_full_name|default:poll.created_by.username }}<br>
+                        <strong>Voting Period:</strong> {{ poll.start_date|date:"M d, Y H:i" }} - {{ poll.end_date|date:"M d, Y H:i" }}<br>
+                        <strong>Total Votes:</strong> {{ poll.total_votes }}
+                    </small>
+                </div>
+
+                {% if user_vote %}
+                    <div class="alert alert-info">
+                        <strong>Your vote:</strong> {{ user_vote.choice.choice_text }}
+                    </div>
+                {% endif %}
+
+                <h4>Vote Results:</h4>
+                
+                <div id="results-container">
+                    {% if poll.total_votes > 0 %}
+                        {% for choice in poll.choices.all %}
+                            <div class="mb-3" data-choice-id="{{ choice.id }}">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span><strong>{{ choice.choice_text }}</strong></span>
+                                    <span class="badge bg-primary vote-count">{{ choice.vote_count }} votes (<span class="percentage">{{ choice.vote_percentage|floatformat:1 }}</span>%)</span>
+                                </div>
+                                {% if choice.description %}
+                                    <small class="text-muted d-block mb-2">{{ choice.description }}</small>
+                                {% endif %}
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: {{ choice.vote_percentage }}%" 
+                                         aria-valuenow="{{ choice.vote_percentage }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        <span class="percentage">{{ choice.vote_percentage|floatformat:1 }}</span>%
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-info">
+                            <p>No votes have been cast yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="mt-4">
+                    {% if not user_vote and poll.is_voting_open %}
+                        <a href="{% url 'polls:detail' poll.id %}" class="btn btn-primary">Cast Your Vote</a>
+                    {% endif %}
+                    <a href="{% url 'polls:index' %}" class="btn btn-secondary">Back to Polls</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Real-time vote updates
+function updateResults() {
+    fetch(`/polls/api/{{ poll.id }}/results/`)
+        .then(response => response.json())
+        .then(data => {
+            // Update total votes
+            const totalVotesElements = document.querySelectorAll('.total-votes');
+            totalVotesElements.forEach(el => {
+                el.textContent = data.total_votes;
+            });
+            
+            // Update each choice
+            data.choices.forEach(choice => {
+                const choiceElement = document.querySelector(`[data-choice-id="${choice.id}"]`);
+                if (choiceElement) {
+                    // Update vote count and percentage
+                    const voteCountElement = choiceElement.querySelector('.vote-count');
+                    const percentageElements = choiceElement.querySelectorAll('.percentage');
+                    const progressBar = choiceElement.querySelector('.progress-bar');
+                    
+                    if (voteCountElement) {
+                        voteCountElement.innerHTML = `${choice.vote_count} votes (<span class="percentage">${choice.percentage.toFixed(1)}</span>%)`;
+                    }
+                    
+                    percentageElements.forEach(el => {
+                        el.textContent = choice.percentage.toFixed(1);
+                    });
+                    
+                    if (progressBar) {
+                        progressBar.style.width = `${choice.percentage}%`;
+                        progressBar.setAttribute('aria-valuenow', choice.percentage);
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error updating results:', error);
+        });
+}
+
+// Update results every 5 seconds if poll is still active
+{% if poll.is_voting_open %}
+setInterval(updateResults, 5000);
+{% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Logout - Online Voting System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">Logout</h3>
+            </div>
+            <div class="card-body text-center">
+                <p>Are you sure you want to logout?</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger me-2">Yes, Logout</button>
+                    <a href="{% url 'polls:index' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

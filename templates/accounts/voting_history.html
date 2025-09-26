@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}My Voting History - Online Voting System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>My Voting History</h2>
+                <div>
+                    <span class="badge bg-primary fs-6">Total Votes: {{ total_votes }}</span>
+                </div>
+            </div>
+            
+            {% if votes %}
+                <div class="row">
+                    {% for vote in votes %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <a href="{% url 'polls:results' vote.choice.poll.id %}" class="text-decoration-none">
+                                            {{ vote.choice.poll.question }}
+                                        </a>
+                                    </h6>
+                                    <p class="card-text">{{ vote.choice.poll.description|truncatewords:15 }}</p>
+                                    
+                                    <div class="alert alert-light border-start border-primary border-4 mb-3">
+                                        <strong>Your Choice:</strong> {{ vote.choice.choice_text }}
+                                        {% if vote.choice.description %}
+                                            <br><small class="text-muted">{{ vote.choice.description }}</small>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <small class="text-muted">
+                                                <strong>Voted:</strong> {{ vote.voted_at|date:"M d, Y H:i" }}<br>
+                                                <strong>Poll Creator:</strong> {{ vote.choice.poll.created_by.get_full_name|default:vote.choice.poll.created_by.username }}
+                                            </small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <small class="text-muted">
+                                                <strong>Poll Status:</strong> 
+                                                {% if vote.choice.poll.is_voting_open %}
+                                                    <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Closed</span>
+                                                {% endif %}<br>
+                                                <strong>Total Votes:</strong> {{ vote.choice.poll.total_votes }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+                                        <a href="{% url 'polls:detail' vote.choice.poll.id %}" class="btn btn-outline-primary btn-sm">View Poll</a>
+                                        <a href="{% url 'polls:results' vote.choice.poll.id %}" class="btn btn-outline-info btn-sm">View Results</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination could be added here for many votes -->
+                
+            {% else %}
+                <div class="alert alert-info text-center">
+                    <h4>No Voting History</h4>
+                    <p>You haven't cast any votes yet.</p>
+                    <a href="{% url 'polls:index' %}" class="btn btn-primary">Browse Polls to Vote</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">Back to Profile</a>
+            <a href="{% url 'polls:index' %}" class="btn btn-primary">Browse More Polls</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
